@@ -16,7 +16,6 @@ module.exports = {
 		publicPath: process.env.PUBLIC_PATH ? process.env.PUBLIC_PATH : '/',
 		chunkFilename: 'static/scripts/[name].[contenthash].bundle.js'
 	},
-	//Нужно помочь вебпаку научится работать с jsx и tsx файлами для этого используют ts loader
 	module: {
 		rules: [
 			{
@@ -25,10 +24,7 @@ module.exports = {
 					{
 						loader: 'ts-loader',
 					},
-				], // для того чтобы ts-loader корректно отработал нам нужен tsconfig его можно создать вручную, а можно создать автоматически
-				/** чтобы проиницилизовать его автоматически можно установить пакет typesctipt глобально или использовать npx выполнив команду npx tsc --init
-				После создания конфига нужно включить "allowJs": true, чтобы работать не только c typescript, также меняем "jsx": "react" чтобы мы могли работать с react компонентами и включаем карту ресурсов "sourceMap": true, пока на этом все вернемся в этот конфиг позже*/
-				exclude: /node_modules/,
+				], exclude: /node_modules/,
 			},
 			{
 				test: /\.(png|jpg|gif|webp)$/,
@@ -61,7 +57,7 @@ module.exports = {
 								localIdentName: '[name]__[local]__[hash:base64:5]',
 								auto: /\.module\.\w+$/i,
 							},
-							importLoaders: 2, //Значение 2 говорит о том, что некоторые трансформации PostCSS нужно применить до css-loader.
+							importLoaders: 2,
 						},
 					},
 					'postcss-loader',
@@ -77,6 +73,9 @@ module.exports = {
 	},
 	resolve: {
 		extensions: ['.js', '.jsx', '.tsx', '.ts', '.json'], //указываем файлы с которыми будет работать webpack
+		fallback: {
+			"process": require.resolve("process/browser")
+		}
 	},
 	plugins: [
 		new HTMLWebpackPlugins({
@@ -88,8 +87,16 @@ module.exports = {
 				? 'static/styles/[name].[contenthash].css'
 				: 'static/styles/[name].css',
 		}),
-		new webpack.EnvironmentPlugin({
-			NODE_ENV: 'development', // значение по умолчанию 'development' если переменная process.env.NODE_ENV не передана
+		new webpack.DefinePlugin({
+			'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+			'process.env.PUBLIC_PATH': JSON.stringify(process.env.PUBLIC_PATH || '/'),
+			'process': JSON.stringify({ env: { 
+				NODE_ENV: process.env.NODE_ENV || 'development',
+				PUBLIC_PATH: process.env.PUBLIC_PATH || '/'
+			}})
+		}),
+		new webpack.ProvidePlugin({
+			process: 'process/browser',
 		}),
 	],
 };
